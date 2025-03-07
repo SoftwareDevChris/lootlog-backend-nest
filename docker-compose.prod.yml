@@ -1,0 +1,46 @@
+services:
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      - ./nginx/prod.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - frontend
+      - backend
+  db:
+    container_name: db-prod
+    image: postgres:17-alpine
+    env_file:
+      - .env.production
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  backend:
+    container_name: backend-prod
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    env_file:
+      - .env.production
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    networks:
+      - app-network
+    depends_on:
+      - db
+
+networks:
+  app-network:
+    name: app-network
+    driver: bridge
+
+volumes:
+  postgres_db: {}
